@@ -28,15 +28,20 @@ using namespace omnetpp;
 
 class MatlabScheduler : public cSequentialScheduler {
 
-public:
+  public:
     MatlabScheduler();
     virtual ~MatlabScheduler();
 
-protected:
+    void startMatlabRuntime();
+
+  protected:
     /**
-     * A cISimulationLifecycleListener method. Delegates to parent class.
+     * A cISimulationLifecycleListener method.
      */
     virtual void lifecycleEvent(SimulationLifecycleEventType eventType, cObject *details) override;
+
+  private:
+    bool initialized = false;
 };
 
 #endif /* MATLABSCHEDULER_H_ */

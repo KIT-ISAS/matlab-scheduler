@@ -16,12 +16,13 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
+#include "MatlabScheduler.h"
 #include <cassert>
 #include <errno.h>
-#include <MatlabScheduler.h>
-#include "mclmcrrt.h"
+#include <mclmcrrt.h>
 
 Register_Class(MatlabScheduler);
+
 
 MatlabScheduler::MatlabScheduler() {
 
@@ -31,11 +32,10 @@ MatlabScheduler::~MatlabScheduler() {
 
 }
 
-void MatlabScheduler::lifecycleEvent(SimulationLifecycleEventType eventType, cObject *details) {
-    switch (eventType) {
-    case LF_ON_STARTUP: {
+void MatlabScheduler::startMatlabRuntime() {
+    if (!initialized) {
         // Initialize the MATLAB Runtime
-        EV << "Initializing MATLAB Runtime" << std::endl;
+        EV << "Initializing MATLAB Runtime" << endl;
         mclmcrInitialize();
 
         const char *args[] = { "-nodisplay", "-nosplash", "-nojvm" };
@@ -44,18 +44,28 @@ void MatlabScheduler::lifecycleEvent(SimulationLifecycleEventType eventType, cOb
         if (!mclInitializeApplication(args, 3)) {
             const char * const err = mclGetLastErrorMessage();
 
-            std::cerr << "could not initialize the matlab application properly: "
-                    << err << std::endl;
+            EV_FATAL << "could not initialize the matlab application properly: "
+                    << err << endl;
             EV << "could not initialize the matlab application properly: "
-                    << err << std::endl;
+                    << err << endl;
 
             throw cRuntimeError("initializeApplication failed");
         }
-        break; }
+
+        initialized = true;
+    }
+}
+
+void MatlabScheduler::lifecycleEvent(SimulationLifecycleEventType eventType, cObject *details) {
+    switch (eventType) {
     case LF_ON_SHUTDOWN:
-        // Release all state and resources used by the MATLAB Runtime for the application
-        mclTerminateApplication();
-        EV << "Terminating MATLAB Runtime" << std::endl;
+        if (initialized) {
+            // Release all state and resources used by the MATLAB Runtime for the application
+            mclTerminateApplication();
+            EV << "Terminating MATLAB Runtime" << endl;
+        }
+
+        initialized = false;
         break;
     default:
         break;

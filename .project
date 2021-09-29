@@ -3,6 +3,7 @@
 	<name>matlab-scheduler</name>
 	<comment></comment>
 	<projects>
+		<project>libncs_matlab</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
